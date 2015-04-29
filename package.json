@@ -12,6 +12,7 @@
 	"fs":"*",
 	"request":"*",
 	"tar-fs":"*",
-	"filewalker":"*"
+	"filewalker":"*",
+	"recursive-readdir":"*"
     }
 }
