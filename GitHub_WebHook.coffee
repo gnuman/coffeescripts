@@ -3,6 +3,9 @@ express = require 'express'
 bodyParser = require 'body-parser'
 crypto = require 'crypto'
 bufPack = require 'bufferpack'
+dnld = require 'dnld'
+rackspace = require 'rackspace'
+
 
 app = express()
 
@@ -10,10 +13,17 @@ PORT = process.argv[2] or process.env.PORT or 8081
 AUTH_SECRET = process.argv[3] or process.env.SECRET_TOKEN or 'test'
 watchEvent = 'release'
 
+uploadFile = 'OpenLearning'
+
+getExtractFileName = (tarFileFolder) ->
+    rackspace.upload(tarFileFolder,uploadFile)
+
 processRelease = (data) ->
-     console.log(data.release.tarball_url)       
-
-
+    dnldTarName = data.release.tag_name + '.tar.gz'
+    uploadFile = data.repository.name+"."+data.release.tag_name
+    # Singnature Url to be downloaded,name of the tarball,callback function,name of the program      
+    dnld.downloadRelease(data.release.tarball_url,dnldTarName,data.repository.name,getExtractFileName)
+ 
 # Process Hook
 hooks = (ghEvent, data) ->
     #console.log 'TODO: Process Event:', ghEvent
