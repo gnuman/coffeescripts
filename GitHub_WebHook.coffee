@@ -5,6 +5,7 @@ crypto = require 'crypto'
 bufPack = require 'bufferpack'
 dnld = require 'dnld'
 rackspace = require 'rackspace'
+fs = require 'fs'
 
 
 app = express()
@@ -13,10 +14,12 @@ PORT = process.argv[2] or process.env.PORT or 8081
 AUTH_SECRET = process.argv[3] or process.env.SECRET_TOKEN or 'test'
 watchEvent = 'release'
 
-uploadFile = 'OpenLearning'
+uploadFilePath = 'OpenLearning'
+confFileName = 'defaultdata.json'
 
 getExtractFileName = (tarFileFolder) ->
-    rackspace.upload(tarFileFolder,uploadFile)
+    projectData = JSON.parse( fs.readFileSync(tarFileFolder+'/'+confFileName).toString() )     
+    rackspace.upload(tarFileFolder,projectData.name+"-"+projectData.version)
 
 processRelease = (data) ->
     dnldTarName = data.release.tag_name + '.tar.gz'
