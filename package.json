@@ -13,6 +13,7 @@
 	"request":"*",
 	"tar-fs":"*",
 	"filewalker":"*",
-	"recursive-readdir":"*"
+	"recursive-readdir":"*",
+	"rimraf":"*"
     }
 }

@@ -6,30 +6,58 @@ bufPack = require 'bufferpack'
 dnld = require 'dnld'
 rackspace = require 'rackspace'
 fs = require 'fs'
-
+rmdir = require 'rimraf'
 
 app = express()
 
 PORT = process.argv[2] or process.env.PORT or 8081
 AUTH_SECRET = process.argv[3] or process.env.SECRET_TOKEN or 'test'
 watchEvent = 'release'
+pathExtract = '/tmp/OpenLearning/'
+
 
 uploadFilePath = 'OpenLearning'
 confFileName = 'defaultdata.json'
 
+rmdirCallback = (err) ->
+    if err
+        console.log err
+
+
+cleanTmpFolder = (tarFileFolder) ->
+    try
+        repoNames = fs.readdirSync tarFileFolder+'/../..'
+        for folder in repoNames
+            rmdir pathExtract+folder,(error)->
+               if error
+                    console.log error
+    catch e
+        console.log e
+        
 getExtractFileName = (tarFileFolder) ->
-    projectData = JSON.parse( fs.readFileSync(tarFileFolder+'/'+confFileName).toString() )     
-    rackspace.upload(tarFileFolder,projectData.name+"-"+projectData.version)
+    try
+        projectData = JSON.parse( fs.readFileSync(tarFileFolder+'/'+confFileName).toString() )     
+        rackspace.upload(tarFileFolder,projectData.name+"-"+projectData.version)
+    catch error
+        console.log "error in parsing ",tarFileFolder+'/'+confFileName
+    finally
+        console.log "Cleaning up the tmp folder", tarFileFolder
+        cleanTmpFolder tarFileFolder
+
 
 processRelease = (data) ->
     dnldTarName = data.release.tag_name + '.tar.gz'
     uploadFile = data.repository.name+"."+data.release.tag_name
-    # Singnature Url to be downloaded,name of the tarball,callback function,name of the program      
-    dnld.downloadRelease(data.release.tarball_url,dnldTarName,data.repository.name,getExtractFileName)
+    # Singnature Url to  be downloaded,name of the tarball,callback function,name of the program      
+    extractPath = pathExtract + data.repository.name + '/'
+    rmdir extractPath,(err) -> 
+        if err
+            console.log err
+    dnld.downloadRelease(data.release.tarball_url,dnldTarName,extractPath,getExtractFileName)
  
 # Process Hook
 hooks = (ghEvent, data) ->
-    #console.log 'TODO: Process Event:', ghEvent
+    #console.log 'Process Event'
     if ghEvent == watchEvent
        # to do Make async
        processRelease(data)
