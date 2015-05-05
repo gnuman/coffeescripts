@@ -26,6 +26,7 @@ rmdirCallback = (err) ->
 
 cleanTmpFolder = (tarFileFolder) ->
     try
+        console.log "Cleaning up tmp dir",tarFileFolder
         repoNames = fs.readdirSync tarFileFolder+'/../..'
         for folder in repoNames
             rmdir pathExtract+folder,(error)->
@@ -33,16 +34,23 @@ cleanTmpFolder = (tarFileFolder) ->
                     console.log error
     catch e
         console.log e
-        
-getExtractFileName = (tarFileFolder) ->
+
+# Callbak when upload finishes 
+uploadCallback = (err,tarFileFolder) ->
+    cleanTmpFolder tarFileFolder
+
+# Callback method which receives path of the tarball folder         
+getExtractFileName = (err,tarFileFolder) ->
+    if(err)
+        cleanTmpFolder tarFileFolder
+        return 
     try
         projectData = JSON.parse( fs.readFileSync(tarFileFolder+'/'+confFileName).toString() )     
-        rackspace.upload(tarFileFolder,projectData.name+"-"+projectData.version)
+        rackspace.upload(tarFileFolder,projectData.name+"-"+projectData.version,uploadCallback)
     catch error
         console.log "error in parsing ",tarFileFolder+'/'+confFileName
-    finally
-        console.log "Cleaning up the tmp folder", tarFileFolder
         cleanTmpFolder tarFileFolder
+        return         
 
 
 processRelease = (data) ->
